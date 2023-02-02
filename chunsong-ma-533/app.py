@@ -249,8 +249,7 @@ def calculate_returns(history_tbl):
     numerator = dt_prc_div_splt[[dte_col, ins_col, prc_col, div_col]].tail(-1)
     denominator = dt_prc_div_splt[[prc_col, spt_col]].head(-1)
 
-    return(
-        pd.DataFrame({
+    result = pd.DataFrame({
         'Date': numerator[dte_col].reset_index(drop=True),
         'Instrument': numerator[ins_col].reset_index(drop=True),
         'rtn': np.log(
@@ -259,9 +258,24 @@ def calculate_returns(history_tbl):
             ).reset_index(drop=True)
         )
     }).pivot_table(
-            values='rtn', index='Date', columns='Instrument'
-        ).to_dict('records')
+        values='rtn', index='Date', columns='Instrument'
+    ).reset_index()
+    result['Date'] = pd.to_datetime(result['Date']).dt.date
+    return(
+        result.to_dict('records')
     )
+
+
+@app.callback(
+    Output("date-picker-range-1", "min_date_allowed"),
+    Output("date-picker-range-1", "max_date_allowed"),
+    Input("date-picker-range", "start_date"),
+    Input("date-picker-range", "end_date"),
+    prevent_initial_call=True
+)
+def update_date_range(start_date, end_date):
+    return start_date, end_date
+
 
 @app.callback(
     Output("history-tbl-1", "data"),
